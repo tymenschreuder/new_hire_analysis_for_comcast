@@ -1,0 +1,194 @@
+#  02 Summarize Data {#02 SummarizeData}
+## a) Descriptive statistics {@a) Descriptive statistics}
+```{r peek-data, message=FALSE, warning=FALSE}
+# load the library
+library(mlbench)
+# load the dataset
+data(PimaIndiansDiabetes)
+# display first 20 rows of data
+head(PimaIndiansDiabetes, n=20)
+# load the iris dataset
+data(iris)
+# summarize the dataset
+summary(iris)
+
+data(BostonHousing)
+# list types for each attribute
+sapply(BostonHousing, class)
+
+# Class Distribution
+
+# load the libraries
+library(mlbench)
+# load the dataset
+data(PimaIndiansDiabetes)
+# distribution of class variable
+y <- PimaIndiansDiabetes$diabetes
+cbind(freq=table(y), percentage=prop.table(table(y))*100)
+# Dimensions of your dataset
+dim(PimaIndiansDiabetes)
+# summarize the dataset
+summary(PimaIndiansDiabetes)
+# Calculate Skewness
+
+# load the dataset
+data(PimaIndiansDiabetes)
+# calculate skewness for each variable
+skew <- apply(PimaIndiansDiabetes[,1:8], 2, skewness)
+# display skewness, larger/smaller deviations from 0 show more skew
+print(skew)
+# calculate standard deviation for all attributes
+sapply(PimaIndiansDiabetes[,1:8], sd)
+
+# Pair-wise correlations using pearson spearman coefficients
+correlations <- cor(PimaIndiansDiabetes[,1:8], method="spearman")
+# display the correlation matrix
+print(correlations)
+```
+
+
+## b) Data visualizations Univariate {@Data visualizations Univariate}
+```{r data-visualizations-univariate, message=FALSE, warning=FALSE}
+# Univariate Histograms
+
+# load the data
+data(iris)
+# create histograms for each attribute
+par(mfrow=c(1,4))
+for(i in 1:4) {
+	hist(iris[,i], main=names(iris)[i])
+}
+# Univariate Density Plots
+# load dataset
+data(iris)
+# create a panel of simpler density plots by attribute
+par(mfrow=c(1,4))
+for(i in 1:4) {
+	plot(density(iris[,i]), main=names(iris)[i])
+}
+# Univarate Box And Whisker Plots
+
+# load dataset
+data(iris)
+# Create separate boxplots for each attribute
+par(mfrow=c(1,4))
+for(i in 1:4) {
+	boxplot(iris[,i], main=names(iris)[i])
+}
+
+# Plot missing data
+
+# load libraries
+library(Amelia)
+library(mlbench)
+# load dataset
+data(Soybean)
+# create a missing map
+missmap(Soybean, col=c("black", "grey"), legend=FALSE)
+```
+## c) Data visualizations multivariate {@c) Data visualizations multivariate}
+```{r data-visualizations-multivariate, message=FALSE, warning=FALSE}
+# Create a density plot for each variable-class combination.
+
+# load the library
+library(caret)
+# load the data
+data(iris)
+# density plots for each attribute by class value
+x <- iris[,1:4]
+y <- iris[,5]
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+featurePlot(x=x, y=y, plot="density", scales=scales)
+# Multivariate Scatterplot Matrix By Class
+
+# load the data
+data(iris)
+# pair-wise scatterplots colored by class
+pairs(Species~., data=iris, col=iris$Species)
+
+# Create a box and whisker plots for each variable organized by class.
+# load the iris dataset
+data(iris)
+# box and whisker plots for each attribute by class value
+x <- iris[,1:4]
+y <- iris[,5]
+featurePlot(x=x, y=y, plot="box")
+# Multivariate Scatterplot Matrix
+
+# load the data
+data(iris)
+# pair-wise scatterplots of all 4 attributes
+pairs(iris)
+# Correlation Plot
+
+# load library
+library(corrplot)
+# load the data
+data(iris)
+# calculate correlations
+correlations <- cor(iris[,1:4])
+# create correlation plot
+corrplot(correlations, method="circle")
+```
+
+## D Data visualizations projection {@D Data visualizations projection}
+```{r data-visualizations-projection, message=FALSE, warning=FALSE}
+# Self Organizing Map (Kohonen)
+
+# load the library
+library("kohonen")
+# load the dataset
+data(iris)
+# split input and output
+x <- data.matrix(iris[,1:4])
+y <- iris[,5]
+# set the random seed for repetable results
+set.seed(7)
+# create a map of the x values
+iris_map <- som(data=x, grid=somgrid(5, 5, "hexagonal"))
+# plot the map
+plot(iris_map)
+
+# TODO label the map by class
+
+# Sammons Mapping
+
+# load library
+library(MASS)
+# load dataset
+data(iris)
+# remove duplicates
+clean <- unique(iris)
+# split out numerical inputs
+x <- data.matrix(clean[, 1:4])
+# create a sammon mapping
+mapping <- sammon(dist(x))
+# plot mapping by class
+plot(mapping$points, type="n")
+text(mapping$points, labels=clean[,5])
+
+# TODO colour dots by class
+# Principal Component Analysis
+
+# load the dataset
+data(iris)
+# separate numerical inputs
+x <- data.matrix(iris[,1:4])
+y <- iris[,5]
+# calculate components
+components <- prcomp(x, center=TRUE, scale=TRUE)
+# display components
+print(components)
+# summarize components
+summary(ir.pca)
+# plot the components
+biplot(components)
+
+# Andrews Curves
+# load library
+library(andrews)
+# load dataset
+data(iris)
+# generate andres curves
+andrews(iris, clr=5, ymax=3)
+```

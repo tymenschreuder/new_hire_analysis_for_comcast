@@ -1,0 +1,413 @@
+#  05 Evaluate Models {#05 EvaluateModels}
+
+## a) Metrics {@a) Metrics}
+```{r metrics-evaluation, message=FALSE, warning=FALSE}
+# ROC: AUC, sensitivity, specificity metrics
+
+# load libraries
+library(caret)
+library(mlbench)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare resampling method
+control <- trainControl(method="cv", number=5, classProbs=TRUE, summaryFunction=twoClassSummary)
+set.seed(7)
+fit <- train(diabetes~., data=PimaIndiansDiabetes, method="glm", metric="ROC", trControl=control)
+# display results
+print(fit)
+
+# RMSE metric
+
+# load libraries
+library(caret)
+# load data
+data(longley)
+# prepare resampling method
+control <- trainControl(method="cv", number=5)
+set.seed(7)
+fit <- train(Employed~., data=longley, method="lm", metric="RMSE", trControl=control)
+# display results
+print(fit)
+
+# Accuracy metric
+
+# load libraries
+library(caret)
+library(mlbench)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare resampling method
+control <- trainControl(method="cv", number=5)
+set.seed(7)
+fit <- train(diabetes~., data=PimaIndiansDiabetes, method="glm", metric="Accuracy", trControl=control)
+# display results
+print(fit)
+
+# Kappa metric
+
+# load libraries
+library(caret)
+library(mlbench)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare resampling method
+control <- trainControl(method="cv", number=5)
+set.seed(7)
+fit <- train(diabetes~., data=PimaIndiansDiabetes, method="glm", metric="Kappa", trControl=control)
+# display results
+print(fit)
+
+# Rsquared metric
+
+# load libraries
+library(caret)
+# load data
+data(longley)
+# prepare resampling method
+control <- trainControl(method="cv", number=5)
+set.seed(7)
+fit <- train(Employed~., data=longley, method="lm", metric="Rsquared", trControl=control)
+# display results
+print(fit)
+
+# MultiNomialLogLoss Metric
+
+# load libraries
+library(caret)
+# load the dataset
+data(iris)
+# prepare resampling method
+control <- trainControl(method="cv", number=5, classProbs=TRUE, summaryFunction=mnLogLoss)
+set.seed(7)
+fit <- train(Species~., data=iris, method="rpart", metric="logLoss", trControl=control)
+# display results
+print(fit)
+
+```
+
+
+## b) Resampling Methods {@b) Resampling Methods}
+```{r resampling-methods, message=FALSE, warning=FALSE}
+# Estimate accuracy using a train/test split.
+
+# load the libraries
+library(caret)
+library(klaR)
+# load the iris dataset
+data(iris)
+# define an 80%/20% train/test split of the dataset
+split=0.80
+trainIndex <- createDataPartition(iris$Species, p=split, list=FALSE)
+data_train <- iris[ trainIndex,]
+data_test  <- iris[-trainIndex,]
+# train a naive bayes model
+model <- NaiveBayes(Species~., data=data_train)
+# make predictions
+x_test <- data_test[,1:4]
+y_test <- data_test[,5]
+predictions <- predict(model, x_test)
+# summarize results
+confusionMatrix(predictions$class, y_test)
+
+# Estimate accuracy using a k-fold cross validation.
+
+# load the library
+library(caret)
+# load the iris dataset
+data(iris)
+# define training control
+train_control <- trainControl(method="cv", number=10)
+# fix the parameters of the algorithm
+grid <- expand.grid(.fL=c(0), .usekernel=c(FALSE))
+# train the model
+model <- train(Species~., data=iris, trControl=train_control, method="nb", tuneGrid=grid)
+# summarize results
+print(model)
+
+# Estimate accuracy using repeated k-fold cross validation.
+
+# load the library
+library(caret)
+# load the iris dataset
+data(iris)
+# define training control
+train_control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# train the model
+model <- train(Species~., data=iris, trControl=train_control, method="nb")
+# summarize results
+print(model)
+
+# Estimate accuracy using the bootstrap.
+
+# load the library
+library(caret)
+# load the iris dataset
+data(iris)
+# define training control
+train_control <- trainControl(method="boot", number=100)
+# train the model
+model <- train(Species~., data=iris, trControl=train_control, method="nb")
+# summarize results
+print(model)
+
+# Estimate accuracy using a leave one out cross validation.
+
+# load the library
+library(caret)
+# load the iris dataset
+data(iris)
+# define training control
+train_control <- trainControl(method="LOOCV")
+# train the model
+model <- train(Species~., data=iris, trControl=train_control, method="nb")
+# summarize results
+print(model)
+```
+
+## c) Model Selection {c) Model Selection}
+```{r model-selection, message=FALSE, warning=FALSE}
+# Compare models using box and whisker plots
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# CART
+set.seed(7)
+fit.cart <- train(diabetes~., data=PimaIndiansDiabetes, method="rpart", trControl=control)
+# LDA
+set.seed(7)
+fit.lda <- train(diabetes~., data=PimaIndiansDiabetes, method="lda", trControl=control)
+# SVM
+set.seed(7)
+fit.svm <- train(diabetes~., data=PimaIndiansDiabetes, method="svmRadial", trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(diabetes~., data=PimaIndiansDiabetes, method="knn", trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(diabetes~., data=PimaIndiansDiabetes, method="rf", trControl=control)
+# collect resamples
+results <- resamples(list(CART=fit.cart, LDA=fit.lda, SVM=fit.svm, KNN=fit.knn, RF=fit.rf))
+# box and whisker plots to compare models
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(results, scales=scales)
+
+# Compare models using density plots plots
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# CART
+set.seed(7)
+fit.cart <- train(diabetes~., data=PimaIndiansDiabetes, method="rpart", trControl=control)
+# LDA
+set.seed(7)
+fit.lda <- train(diabetes~., data=PimaIndiansDiabetes, method="lda", trControl=control)
+# SVM
+set.seed(7)
+fit.svm <- train(diabetes~., data=PimaIndiansDiabetes, method="svmRadial", trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(diabetes~., data=PimaIndiansDiabetes, method="knn", trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(diabetes~., data=PimaIndiansDiabetes, method="rf", trControl=control)
+# collect resamples
+results <- resamples(list(CART=fit.cart, LDA=fit.lda, SVM=fit.svm, KNN=fit.knn, RF=fit.rf))
+# density plots of accuracy
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+densityplot(results, scales=scales, pch = "|")
+
+# Compare models using dotplots
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# CART
+set.seed(7)
+fit.cart <- train(diabetes~., data=PimaIndiansDiabetes, method="rpart", trControl=control)
+# LDA
+set.seed(7)
+fit.lda <- train(diabetes~., data=PimaIndiansDiabetes, method="lda", trControl=control)
+# SVM
+set.seed(7)
+fit.svm <- train(diabetes~., data=PimaIndiansDiabetes, method="svmRadial", trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(diabetes~., data=PimaIndiansDiabetes, method="knn", trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(diabetes~., data=PimaIndiansDiabetes, method="rf", trControl=control)
+# collect resamples
+results <- resamples(list(CART=fit.cart, LDA=fit.lda, SVM=fit.svm, KNN=fit.knn, RF=fit.rf))
+# dot plots of accuracy
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+dotplot(results, scales=scales)
+
+# Compare models using parallel plots
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# CART
+set.seed(7)
+fit.cart <- train(diabetes~., data=PimaIndiansDiabetes, method="rpart", trControl=control)
+# LDA
+set.seed(7)
+fit.lda <- train(diabetes~., data=PimaIndiansDiabetes, method="lda", trControl=control)
+# SVM
+set.seed(7)
+fit.svm <- train(diabetes~., data=PimaIndiansDiabetes, method="svmRadial", trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(diabetes~., data=PimaIndiansDiabetes, method="knn", trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(diabetes~., data=PimaIndiansDiabetes, method="rf", trControl=control)
+# collect resamples
+results <- resamples(list(CART=fit.cart, LDA=fit.lda, SVM=fit.svm, KNN=fit.knn, RF=fit.rf))
+# parallel plots to compare models
+parallelplot(results)
+
+# Compare models using scatterplot matrix
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# CART
+set.seed(7)
+fit.cart <- train(diabetes~., data=PimaIndiansDiabetes, method="rpart", trControl=control)
+# LDA
+set.seed(7)
+fit.lda <- train(diabetes~., data=PimaIndiansDiabetes, method="lda", trControl=control)
+# SVM
+set.seed(7)
+fit.svm <- train(diabetes~., data=PimaIndiansDiabetes, method="svmRadial", trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(diabetes~., data=PimaIndiansDiabetes, method="knn", trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(diabetes~., data=PimaIndiansDiabetes, method="rf", trControl=control)
+# collect resamples
+results <- resamples(list(CART=fit.cart, LDA=fit.lda, SVM=fit.svm, KNN=fit.knn, RF=fit.rf))
+# pair-wise scatterplots of predictions to compare models
+splom(results)
+# pair-wise scatterplots of accuracy measures to compare models
+splom(results, variables="metrics")
+
+# Compare models using a table summary
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# CART
+set.seed(7)
+fit.cart <- train(diabetes~., data=PimaIndiansDiabetes, method="rpart", trControl=control)
+# LDA
+set.seed(7)
+fit.lda <- train(diabetes~., data=PimaIndiansDiabetes, method="lda", trControl=control)
+# SVM
+set.seed(7)
+fit.svm <- train(diabetes~., data=PimaIndiansDiabetes, method="svmRadial", trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(diabetes~., data=PimaIndiansDiabetes, method="knn", trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(diabetes~., data=PimaIndiansDiabetes, method="rf", trControl=control)
+# collect resamples
+results <- resamples(list(CART=fit.cart, LDA=fit.lda, SVM=fit.svm, KNN=fit.knn, RF=fit.rf))
+# summarize differences between modes
+summary(results)
+
+# Compare models using xyplot
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# CART
+set.seed(7)
+fit.cart <- train(diabetes~., data=PimaIndiansDiabetes, method="rpart", trControl=control)
+# LDA
+set.seed(7)
+fit.lda <- train(diabetes~., data=PimaIndiansDiabetes, method="lda", trControl=control)
+# SVM
+set.seed(7)
+fit.svm <- train(diabetes~., data=PimaIndiansDiabetes, method="svmRadial", trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(diabetes~., data=PimaIndiansDiabetes, method="knn", trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(diabetes~., data=PimaIndiansDiabetes, method="rf", trControl=control)
+# collect resamples
+results <- resamples(list(CART=fit.cart, LDA=fit.lda, SVM=fit.svm, KNN=fit.knn, RF=fit.rf))
+# xyplot plots to compare models
+xyplot(results, models=c("LDA", "SVM"))
+
+# Calculate statistical significance of difference between model predictions
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# CART
+set.seed(7)
+fit.cart <- train(diabetes~., data=PimaIndiansDiabetes, method="rpart", trControl=control)
+# LDA
+set.seed(7)
+fit.lda <- train(diabetes~., data=PimaIndiansDiabetes, method="lda", trControl=control)
+# SVM
+set.seed(7)
+fit.svm <- train(diabetes~., data=PimaIndiansDiabetes, method="svmRadial", trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(diabetes~., data=PimaIndiansDiabetes, method="knn", trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(diabetes~., data=PimaIndiansDiabetes, method="rf", trControl=control)
+# collect resamples
+results <- resamples(list(CART=fit.cart, LDA=fit.lda, SVM=fit.svm, KNN=fit.knn, RF=fit.rf))
+# difference in model predictions
+diffs <- diff(results)
+# summarize p-values for pair-wise comparisons
+summary(diffs)
+# plot of differences
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(diffs, scales=scales)
+# t-test between two models
+compare_models(fit.svm, fit.lda)
+```
+

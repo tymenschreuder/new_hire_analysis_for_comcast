@@ -1,0 +1,32 @@
+--- 
+title: "Comcast New Hire Analysis"
+author: "Tymen Schreuder"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+github-repo: tymenschreuder/new_hire_analysis_for_comcast
+description: "Machine Learning for predicting trucker churn"
+---
+```{r setup, include=FALSE}
+knitr::opts_template$set(default_opts = list(fig.height = .5, 
+     fig.width = .7, 
+     error = FALSE,
+	   message = FALSE,
+	   warning = FALSE,
+	   collapse = TRUE,
+	   class.output = character,
+	   tidy=TRUE,
+	   tidy.opts=list(blank=FALSE, width.cutoff=60),
+	   fig.align = center)
+	)
+```
+
+# Introduction: Demo of my steps for analysis {-}
+
+This is a _prototype_ of how I would perform an analysis of predicting Truck problem cases that lead to resolved versus unresolved prediction. I will demonstrate the code, the output, and the predictions for an entire analytic project, for  **Comcast**
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, r eval=FALSE}
+library("bookdown")
+library('datasets')
+```

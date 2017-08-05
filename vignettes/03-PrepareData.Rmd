@@ -1,0 +1,279 @@
+# 03 Prepare Data {@03 PrepareData}
+
+## a) Data Cleaning {@a) Data Cleaning}
+```{r data-cleaning, message=FALSE, warning=FALSE}
+# Remove rows with NA
+
+# load library
+library(mlbench)
+# load dataset
+data(BreastCancer)
+# summarize dimensions of dataset
+dim(BreastCancer)
+# Remove all incomplete rows
+dataset <- BreastCancer[complete.cases(BreastCancer),]
+# summarize dimensions of resulting dataset
+dim(dataset)
+
+# Update Data Frame to Remove Outliers
+
+# load the libraries
+library(mlbench)
+# load the dataset
+data(PimaIndiansDiabetes)
+# calculate stats for pregnant (number of times pregnant)
+pregnant.mean <- mean(PimaIndiansDiabetes$pregnant)
+pregnant.sd <- sd(PimaIndiansDiabetes$pregnant)
+# max reasonable value is within 99.7% of the data (if Gaussian)
+pregnant.max <- pregnant.mean + (3*pregnant.sd)
+# mark outlier pregnant values as N/A
+PimaIndiansDiabetes$pregnant[PimaIndiansDiabetes$pregnant>pregnant.max] <- NA
+
+# Remove rows with NA
+
+# load library
+library(mlbench)
+# load dataset
+data(BreastCancer)
+# summarize dimensions of dataset
+dim(BreastCancer)
+# Remove all incomplete rows
+dataset <- BreastCancer[complete.cases(BreastCancer),]
+# summarize dimensions of resulting dataset
+dim(dataset)
+
+ # Impute missing values
+
+ # load the libraries
+library(mlbench)
+library(Hmisc)
+# load the dataset
+data(PimaIndiansDiabetes)
+# mark a pressure of 0 as N/A, it is impossible
+invalid <- 0
+PimaIndiansDiabetes$pressure[PimaIndiansDiabetes$pressure==invalid] <- NA
+# impute missing pressure values using the mean
+PimaIndiansDiabetes$pressure <- with(PimaIndiansDiabetes, impute(pressure, mean))
+
+# Remove Duplicate Instances
+
+# load the libraries
+library(mlbench)
+# load the dataset
+data(iris)
+dim(iris)
+# remove duplicates
+clean <- unique(iris)
+dim(clean)
+
+# Rebalance a dataset using Synthetic Minority Over-sampling Technique (SMOTE)
+
+# load the libraries
+library(mlbench)
+library(DMwR)
+# load the dataset
+data(PimaIndiansDiabetes)
+# display count of instances of each class (unbalanced)
+table(PimaIndiansDiabetes$diabetes)
+# use SMOTE to created a "more balance" version of the dataset
+balanced <- SMOTE(diabetes~., PimaIndiansDiabetes, perc.over=300, perc.under=100)
+```
+## b) Feature Selection {b) Feature Selection}
+```{r feature-selection, message=FALSE, warning=FALSE}
+# Identify and remove highly correlated features
+
+# load the libraries
+library(mlbench)
+library(caret)
+# load the data
+data(PimaIndiansDiabetes)
+# calculate correlation matrix
+correlationMatrix <- cor(PimaIndiansDiabetes[,1:8])
+# find attributes that are highly corrected (ideally >0.75)
+cutoff <- 0.50
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=cutoff)
+# create a new dataset without highly corrected features
+dataset <- PimaIndiansDiabetes[,-highlyCorrelated]
+
+# Use RFE and to select features
+
+# load the library
+library(mlbench)
+library(caret)
+# load the data
+data(Sonar)
+# define the control using a random forest selection function
+control <- rfeControl(functions=rfFuncs, method="cv", number=10)
+# run the RFE algorithm
+x <- Sonar[,1:60]
+y <- Sonar[,61]
+sizes <- c(10,20,30,40,50,60)
+results <- rfe(x, y, sizes=sizes, rfeControl=control)
+# summarize the results
+print(results)
+# list the chosen features
+predictors(results)
+# plot accuracy versus the number of features
+plot(results, type=c("g", "o"))
+
+# Rank features by their importance.
+
+# load the libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# prepare training scheme
+control <- trainControl(method="cv", number=10)
+# train the model
+model <- train(diabetes~., data=PimaIndiansDiabetes, method="lvq", preProcess="scale", trControl=control)
+# estimate variable importance
+importance <- varImp(model, scale=FALSE)
+# summarize importance
+print(importance)
+# plot importance
+plot(importance)
+```
+
+## c) Data Transforms {@c) Data Transforms}
+```{r data-transformations, message=FALSE, warning=FALSE}
+# Center attributes by subtracting the mean
+
+# load libraries
+library(caret)
+# load the dataset
+data(iris)
+# summarize data
+summary(iris[,1:4])
+# calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(iris[,1:4], method=c("center"))
+# summarize transform parameters
+print(preprocessParams)
+# transform the dataset using the parameters
+transformed <- predict(preprocessParams, iris[,1:4])
+# summarize the transformed dataset
+summary(transformed)
+
+# Standardize numeric attributes so they have zero mean and unit variance.
+
+# load libraries
+library(caret)
+# load the dataset
+data(iris)
+# summarize data
+summary(iris[,1:4])
+# calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(iris[,1:4], method=c("center", "scale"))
+# summarize transform parameters
+print(preprocessParams)
+# transform the dataset using the parameters
+transformed <- predict(preprocessParams, iris[,1:4])
+# summarize the transformed dataset
+summary(transformed)
+
+# Scale attributes by dividing by standard deviation
+
+# load libraries
+library(caret)
+# load the dataset
+data(iris)
+# summarize data
+summary(iris[,1:4])
+# calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(iris[,1:4], method=c("scale"))
+preprocessParams <- preProcess(iris[,1:4], method=c("range"))
+# summarize transform parameters
+print(preprocessParams)
+# transform the dataset using the parameters
+transformed <- predict(preprocessParams, iris[,1:4])
+# summarize the transformed dataset
+summary(transformed)
+
+# Normalize numeric attributes to the range [0,1]
+
+# load libraries
+library(caret)
+# load the dataset
+data(iris)
+# summarize data
+summary(iris[,1:4])
+# calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(iris[,1:4], method=c("range"))
+# summarize transform parameters
+print(preprocessParams)
+# transform the dataset using the parameters
+transformed <- predict(preprocessParams, iris[,1:4])
+# summarize the transformed dataset
+summary(transformed)
+
+# Box-Cox Transform (attributes must be numeric and >0)
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# summarize pedigree and age
+summary(PimaIndiansDiabetes[,7:8])
+# calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(PimaIndiansDiabetes[,7:8], method=c("BoxCox"))
+# summarize transform parameters
+print(preprocessParams)
+# transform the dataset using the parameters
+transformed <- predict(preprocessParams, PimaIndiansDiabetes[,7:8])
+# summarize the transformed dataset (note pedigree and age)
+summary(transformed)
+
+# Principal Component Analysis Pre-processing
+
+# load the libraries
+library(mlbench)
+# load the dataset
+data(iris)
+# summarize dataset
+summary(iris)
+# calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(iris, method=c("center", "scale", "pca"))
+# summarize transform parameters
+print(preprocessParams)
+# transform the dataset using the parameters
+transformed <- predict(preprocessParams, iris)
+# summarize the transformed dataset
+summary(transformed)
+
+# Independent Component Analysis Pre-processing
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# summarize dataset
+summary(PimaIndiansDiabetes[,1:8])
+# calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(PimaIndiansDiabetes[,1:8], method=c("center", "scale", "ica"), n.comp=5)
+# summarize transform parameters
+print(preprocessParams)
+# transform the dataset using the parameters
+transformed <- predict(preprocessParams, PimaIndiansDiabetes[,1:8])
+# summarize the transformed dataset
+summary(transformed)
+
+# Yeo-Johnson Transform
+
+# load libraries
+library(mlbench)
+library(caret)
+# load the dataset
+data(PimaIndiansDiabetes)
+# summarize pedigree and age
+summary(PimaIndiansDiabetes[,7:8])
+# calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(PimaIndiansDiabetes[,7:8], method=c("YeoJohnson"))
+# summarize transform parameters
+print(preprocessParams)
+# transform the dataset using the parameters
+transformed <- predict(preprocessParams, PimaIndiansDiabetes[,7:8])
+# summarize the transformed dataset (note pedigree and age)
+summary(transformed)
+```
