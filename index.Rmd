@@ -8,17 +8,17 @@ documentclass: book
 github-repo: tymenschreuder/new_hire_analysis_for_comcast
 description: "Machine Learning for predicting trucker churn"
 ---
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, cache=TRUE}
+PROJECT_HOME = .rs.getProjectDirectory()
 knitr::opts_template$set(default_opts = list(fig.height = .5, 
      fig.width = .7, 
      error = FALSE,
 	   message = FALSE,
 	   warning = FALSE,
 	   collapse = TRUE,
-	   class.output = character,
+	  # class.output = "character",
 	   tidy=TRUE,
-	   tidy.opts=list(blank=FALSE, width.cutoff=60),
-	   fig.align = center)
+	   tidy.opts=list(blank=FALSE, width.cutoff=60))
 	)
 ```
 
@@ -29,4 +29,5 @@ This is a _prototype_ of how I would perform an analysis of predicting Truck pro
 ```{r eval=FALSE, message=FALSE, warning=FALSE, r eval=FALSE}
 library("bookdown")
 library('datasets')
+
 ```

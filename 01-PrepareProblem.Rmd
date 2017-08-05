@@ -1,123 +1,101 @@
-#  01 Prepare Problem 
-## a) Load packages {@a) Load packages}
-```{r load_project_packages, message=FALSE, warning=FALSE}
-# Install package with dependencies
-#install.packages("caret", dependencies = c("Depends", "Suggests"))
-packages <- c("tidyverse", "ggplot2", "caret", "mlbench", "caretEnsemble", "ipred", "rpart","doMC", "AppliedPredictiveModeling", "corrplot", "Hmisc", "DMwR", "lattice",
-	"RWeka", "e1071", "C50", "andrews", "kohonen")
+#  01 Data Prep
 
-for (p in packages) {
-	if(p %in% rownames(installed.packages()) == FALSE) {
-		install.packages(p, repos=repository)
-	}
-}
+# Load Libraries 
+```{r load_project_packages, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+source("./R/load_libraries.R")
+print(PROJECT_HOME)# = .rs.getProjectDirectory()
+```
+## Load Data, see what 'type' the csv file believes the columns to be
+```{r read-in-data, echo=FALSE, cache=TRUE, message=TRUE, include=FALSE}
+
+new_hire_data_path <- paste(PROJECT_HOME, "data-raw", "New Hire train set.csv", sep="/")
+#new_hire_train_set <- read_csv(new_hire_data_path)
+#new_hire_dt <- read_csv(new_hire_data_path)
 ```
 
-## b) Load dataset {@b) Load dataset}
-```{r load_data_packages, message=FALSE, warning=FALSE}
-# Datasets from the mlbench library
 
-# load the library
-library(mlbench)
-
-# list the contents of the library
-#library(help = "mlbench")
-
-# Boston Housing dataset
-data(BostonHousing)
-#dim(BostonHousing)
-#head(BostonHousing)
-
-# Wisconsin Breast Cancer dataset
-data(BreastCancer)
-#dim(BreastCancer)
-#levels(BreastCancer$Class)
-#head(BreastCancer)
-
-# Glass Identification dataset
-data(Glass)
-#dim(Glass)
-#levels(Glass$Type)
-#head(Glass)
-
-# Johns Hopkins University Ionosphere dataset
-data(Ionosphere)
-#dim(Ionosphere)
-#levels(Ionosphere$Class)
-#head(Ionosphere)
-
-# Pima Indians Diabetes dataset
-data(PimaIndiansDiabetes)
-#dim(PimaIndiansDiabetes)
-#levels(PimaIndiansDiabetes$diabetes)
-#head(PimaIndiansDiabetes)
-
-# Sonar, Mines vs. Rocks dataset
-data(Sonar)
-#dim(Sonar)
-#levels(Sonar$Class)
-#head(Sonar)
-
-# Soybean dataset
-data(Soybean)
-#dim(Soybean)
-#levels(Soybean$Class)
-#head(Soybean)
-#
-# Datasets from the AppliedPredictiveModeling library
-
-# load the library
-library(AppliedPredictiveModeling)
-
-# list the contents of the library
-#library(help = "AppliedPredictiveModeling")
-
-# Abalone Data
-data(abalone)
-dim(abalone)
-head(abalone)
-
-# Datasets from the dataset library
-
-# list the contents of the library
-#library(help = "datasets")
-library('datasets')
-# list all available datasets in all loaded libraries
-data()
-
-# Iris flowers datasets
-data(iris)
-dim(iris)
-levels(iris$Species)
-head(iris)
-
-# Longley's Economic Regression Data
-data(longley)
-dim(longley)
-head(longley)
-
-# Load data from a CSV file in the local directory
-# define the filename
-# filename <- "/Users/tymen/RHome/machine_learning_mastery_with_r/code/1-AnalyzeData/1-LoadData/iris.csv"
-# # load the CSV file from the local directory
-# dataset <- read_csv(filename)
-# preview the first 5 rows
-#head(dataset)
-
-# Load CSV From a URL
-
-# load the library
-library(RCurl)
-# specify the URL for the Iris data CSV
-urlfile <-'https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data'
-# download the file
-downloaded <- getURL(urlfile, ssl.verifypeer=FALSE)
-# treat the text data as a steam so we can read from it
-connection <- textConnection(downloaded)
-# parse the downloaded data as CSV
-dataset <- read.csv(connection, header=FALSE)
-# preview the first 5 rows
-head(dataset)
-
+## Basic peek at data
+```{r data-basics, echo=TRUE, message=TRUE, warning=FALSE, collapse=TRUE}
+dim(new_hire_dt)
+head(new_hire_dt)
+tail(new_hire_dt)
+summary(new_hire_dt)
+glimpse(new_hire_dt)
 ```
-## c) Split-out validation dataset {@c) Split-out validation dataset}
+891 observations, 12 columns if count id column
+looks like problem code has na values but considered characters.
+Age variable has 171  na values
+City has 2 na values
+
+## Munging/Wrangling/Plumbing/Manipulation - whichever preference you have for data prep
+```{r fix_column_name_and_types, echo=TRUE, message=FALSE, warning=FALSE}
+#new_col_names <- repair_names(colnames(new_hire_dt), prefix = "", sep = "_")
+#set_tidy_names(colnames(new_hire_dt), unique=TRUE))
+require(stringr)
+#new_hire_dt = new_hire_dt[complete.cases("City"),]
+new_hire_dt = dplyr::as_data_frame(new_hire_dt)
+clone_dt = new_hire_dt
+  new_col_names <-colnames(new_hire_dt) %>%
+  str_trim() %>%
+  str_replace_all(" ", "_") %>%
+  str_replace("/", "_") %>%
+  str_replace("#", "num") %>%
+  tolower()
+  
+#colnames(new_hire_dt) <- new_col_names
+
+colnames(new_hire_dt) <- new_col_names
+#names_db = as.tibble(cbind(old_name = new_col_names, new_name = colnames(clone_dt)))
+ 
+#new_hire_dt <- as.tibble(rio::import("./data/new_hire_dt.csv"))
+new_hire_dt <- new_hire_dt %>% 
+  rename(
+         resolved = survey_issue_resolved,
+         cust_score = customer_lifetime_value,
+         gender = sex,
+         sibs_and_spouses = siblings_spouses,
+         parents_and_children = parents_children,
+         latest_bill_cost = most_recent_bill,
+         full_name = fake_name
+)
+new_hire_dt <- new_hire_dt %>% 
+        mutate(resolved = parse_factor(resolved,levels=NULL),
+        cust_score = parse_factor(cust_score, levels = NULL, ordered=is.ordered()),
+        gender = parse_factor(gender, levels=NULL),                                            workorder_num = str_trim(workorder_num),
+        order_num = ifelse(str_detect(workorder_num, pattern="[^1-9]")==TRUE,           str_split_fixed(workorder_num, pattern = "[, ]{1}", n=2)[,2],           workorder_num),
+        order_label = ifelse(str_detect(workorder_num, pattern="[^1-9]")==TRUE,         str_split_fixed(workorder_num, pattern = "[, ]{1}", n=2)[,1], "standard"),
+        family_size = sibs_and_spouses + parents_and_children,
+        age = as.integer(age, na.rm=TRUE),
+        most_recent_bill = as.double(latest_bill_cost),
+        problem_code = parse_factor(problem_code, levels=NULL),
+        city = parse_factor(city, levels=NULL),
+        surname = str_split_fixed(full_name, pattern = ", ", n=2)[,1],
+        title = str_split_fixed(str_split_fixed(full_name, pattern = ", ", n=2)[,2], pattern = "[.]{1}", n = 2)[,1]
+)  %>% collect()
+
+index_fix_numbers = which(is.na(as.numeric(new_hire_dt$order_num)))
+new_hire_dt$order_num[index_fix_numbers] <- new_hire_dt$workorder_num[index_fix_numbers]
+new_hire_dt$order_num <- str_pad(new_hire_dt$order_num, width=6, side="right", pad="0")
+#new_hire_dt$order_num[index_fix_labels] <- "standard"
+ids_fix = c(116, 	383, 	637, 	401, 	745, 	580, 	665, 	174, 	244, 	434, 	591, 	415, 	474)
+order_num_fix_indexes = c("3101294",	"3101293",	"3101292",	"3101289",	"3101288",	"3101286",	"3101285",	"3101280",	"3101275",	"3101274",	"3101273",	"3101269",	"541")
+new_hire_dt[ids_fix,]$order_num <- order_num_fix_indexes
+new_hire_dt[c(180, 272, 303, 598), ]$order_num = "LINE"
+
+nobility = c("Don", "Ms", "Major", "Lady", "Sir", "Mlle", "Col", "Capt", "the Countess", "Jonkheer", "Master", "Rev", "Dr", "Mme")
+indexes_nobility <- which((new_hire_dt$title %in% nobility)==TRUE)
+new_hire_dt$title[indexes_nobility] = "nobility"
+
+new_hire_dt <- new_hire_dt %>% 
+mutate(
+      problem_code = readr::parse_factor(problem_code, levels=NULL),
+      order_num = parse_factor(order_num, levels=NULL),
+      order_label = parse_factor(order_label, levels=NULL),
+      surname = parse_factor(surname, levels=NULL),
+      title = parse_factor(title, levels=NULL)
+) %>% collect()
+print(unique(new_hire_dt$title))
+glimpse(new_hire_dt)
+View(new_hire_dt)
+rio::export(x=new_hire_dt,file="./data/new_hire_dt.rda")
+```
